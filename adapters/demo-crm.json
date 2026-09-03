@@ -1,0 +1,207 @@
+{
+  "id": "demo-crm",
+  "name": "Acme CRM",
+  "version": "1.3.0",
+  "description": "Search, create and update customers in the Acme CRM demo by driving its real UI. The site itself implements no WebMCP.",
+  "category": "crm",
+  "author": "Liha WebMCP Adapter",
+  "verifiedAt": "2026-09-01",
+  "origins": [
+    "http://localhost:5273",
+    "http://127.0.0.1:5273",
+    "https://demo-crm.liha.review"
+  ],
+  "tools": [
+    {
+      "name": "search_customers",
+      "title": "Search customers",
+      "description": "Search the customer list by name or email and return the matching records.",
+      "capability": "READ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Name or email fragment to search for"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "probeSelectors": [
+        "[data-testid='customer-search']",
+        "[data-testid='customer-list']"
+      ],
+      "steps": [
+        {
+          "type": "fill",
+          "selector": "[data-testid='customer-search']",
+          "value": "{{query}}"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='customer-list']"
+        },
+        {
+          "type": "readList",
+          "selector": "[data-testid='customer-list'] li",
+          "as": "customers",
+          "limit": 25,
+          "fields": {
+            "id": {
+              "attribute": "data-customer-id"
+            },
+            "name": {
+              "selector": "[data-field='name']"
+            },
+            "email": {
+              "selector": "[data-field='email']"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "create_customer",
+      "title": "Create customer",
+      "description": "Create a new customer record by filling in and submitting the real Add Customer form, then confirm the record exists by looking it up.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name of the customer"
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Contact email address"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ]
+      },
+      "probeSelectors": [
+        "[data-action='add-customer']"
+      ],
+      "steps": [
+        {
+          "type": "click",
+          "selector": "[data-action='add-customer']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='customer-form'] [name='name']"
+        },
+        {
+          "type": "fill",
+          "selector": "[data-testid='customer-form'] [name='name']",
+          "value": "{{name}}"
+        },
+        {
+          "type": "fill",
+          "selector": "[data-testid='customer-form'] [name='email']",
+          "value": "{{email}}"
+        },
+        {
+          "type": "click",
+          "selector": "[data-action='create-customer']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='customer-dialog']",
+          "state": "absent"
+        },
+        {
+          "type": "fill",
+          "selector": "[data-testid='customer-search']",
+          "value": "{{email}}"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='customer-list'] li"
+        },
+        {
+          "type": "readAttribute",
+          "selector": "[data-testid='customer-list'] li",
+          "attribute": "data-customer-id",
+          "as": "customer_id"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='customer-list'] li [data-field='name']",
+          "as": "created_customer"
+        }
+      ]
+    },
+    {
+      "name": "update_customer",
+      "title": "Update customer name",
+      "description": "Change a customer's name. The customer is located by their email address, and the tool fails if the search does not narrow to exactly one record.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "description": "Email address identifying the customer"
+          },
+          "name": {
+            "type": "string",
+            "description": "The new full name"
+          }
+        },
+        "required": [
+          "email",
+          "name"
+        ]
+      },
+      "probeSelectors": [
+        "[data-testid='customer-search']"
+      ],
+      "steps": [
+        {
+          "type": "fill",
+          "selector": "[data-testid='customer-search']",
+          "value": "{{email}}"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='customer-list'] li"
+        },
+        {
+          "type": "click",
+          "selector": "[data-testid='customer-list'] li [data-action='edit-customer']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='customer-edit-form'] [name='name']"
+        },
+        {
+          "type": "fill",
+          "selector": "[data-testid='customer-edit-form'] [name='name']",
+          "value": "{{name}}"
+        },
+        {
+          "type": "click",
+          "selector": "[data-action='save-customer']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='customer-edit-dialog']",
+          "state": "absent"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='customer-list'] li [data-field='name']",
+          "as": "updated_customer"
+        }
+      ]
+    }
+  ]
+}

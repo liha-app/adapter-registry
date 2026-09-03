@@ -1,0 +1,1024 @@
+{
+  "schemaVersion": 1,
+  "adapters": [
+    {
+      "status": "official",
+      "verified": true,
+      "source": "adapters/demo-crm.json",
+      "adapter": {
+        "id": "demo-crm",
+        "name": "Acme CRM",
+        "version": "1.3.0",
+        "description": "Search, create and update customers in the Acme CRM demo by driving its real UI. The site itself implements no WebMCP.",
+        "category": "crm",
+        "author": "Liha WebMCP Adapter",
+        "verifiedAt": "2026-09-01",
+        "origins": [
+          "http://localhost:5273",
+          "http://127.0.0.1:5273",
+          "https://demo-crm.liha.review"
+        ],
+        "tools": [
+          {
+            "name": "search_customers",
+            "title": "Search customers",
+            "description": "Search the customer list by name or email and return the matching records.",
+            "capability": "READ",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "Name or email fragment to search for"
+                }
+              },
+              "required": [
+                "query"
+              ]
+            },
+            "probeSelectors": [
+              "[data-testid='customer-search']",
+              "[data-testid='customer-list']"
+            ],
+            "steps": [
+              {
+                "type": "fill",
+                "selector": "[data-testid='customer-search']",
+                "value": "{{query}}"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='customer-list']"
+              },
+              {
+                "type": "readList",
+                "selector": "[data-testid='customer-list'] li",
+                "as": "customers",
+                "limit": 25,
+                "fields": {
+                  "id": {
+                    "attribute": "data-customer-id"
+                  },
+                  "name": {
+                    "selector": "[data-field='name']"
+                  },
+                  "email": {
+                    "selector": "[data-field='email']"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "create_customer",
+            "title": "Create customer",
+            "description": "Create a new customer record by filling in and submitting the real Add Customer form, then confirm the record exists by looking it up.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Full name of the customer"
+                },
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "description": "Contact email address"
+                }
+              },
+              "required": [
+                "name",
+                "email"
+              ]
+            },
+            "probeSelectors": [
+              "[data-action='add-customer']"
+            ],
+            "steps": [
+              {
+                "type": "click",
+                "selector": "[data-action='add-customer']"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='customer-form'] [name='name']"
+              },
+              {
+                "type": "fill",
+                "selector": "[data-testid='customer-form'] [name='name']",
+                "value": "{{name}}"
+              },
+              {
+                "type": "fill",
+                "selector": "[data-testid='customer-form'] [name='email']",
+                "value": "{{email}}"
+              },
+              {
+                "type": "click",
+                "selector": "[data-action='create-customer']"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='customer-dialog']",
+                "state": "absent"
+              },
+              {
+                "type": "fill",
+                "selector": "[data-testid='customer-search']",
+                "value": "{{email}}"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='customer-list'] li"
+              },
+              {
+                "type": "readAttribute",
+                "selector": "[data-testid='customer-list'] li",
+                "attribute": "data-customer-id",
+                "as": "customer_id"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='customer-list'] li [data-field='name']",
+                "as": "created_customer"
+              }
+            ]
+          },
+          {
+            "name": "update_customer",
+            "title": "Update customer name",
+            "description": "Change a customer's name. The customer is located by their email address, and the tool fails if the search does not narrow to exactly one record.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "email": {
+                  "type": "string",
+                  "format": "email",
+                  "description": "Email address identifying the customer"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The new full name"
+                }
+              },
+              "required": [
+                "email",
+                "name"
+              ]
+            },
+            "probeSelectors": [
+              "[data-testid='customer-search']"
+            ],
+            "steps": [
+              {
+                "type": "fill",
+                "selector": "[data-testid='customer-search']",
+                "value": "{{email}}"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='customer-list'] li"
+              },
+              {
+                "type": "click",
+                "selector": "[data-testid='customer-list'] li [data-action='edit-customer']"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='customer-edit-form'] [name='name']"
+              },
+              {
+                "type": "fill",
+                "selector": "[data-testid='customer-edit-form'] [name='name']",
+                "value": "{{name}}"
+              },
+              {
+                "type": "click",
+                "selector": "[data-action='save-customer']"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='customer-edit-dialog']",
+                "state": "absent"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='customer-list'] li [data-field='name']",
+                "as": "updated_customer"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "status": "official",
+      "verified": true,
+      "source": "adapters/demo-project.json",
+      "adapter": {
+        "id": "demo-project",
+        "name": "Kite Project Manager",
+        "version": "1.2.0",
+        "description": "Create, assign, re-status, flag and delete tasks in the Kite Project Manager demo. Deleting is classified DESTRUCTIVE and always asks for confirmation.",
+        "category": "productivity",
+        "author": "Liha WebMCP Adapter",
+        "verifiedAt": "2026-09-01",
+        "origins": [
+          "http://localhost:5275",
+          "http://127.0.0.1:5275",
+          "https://demo-project.liha.review"
+        ],
+        "tools": [
+          {
+            "name": "list_tasks",
+            "title": "List tasks",
+            "description": "Search tasks by title or assignee and return the matching tasks with their assignee and status.",
+            "capability": "READ",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "query": {
+                  "type": "string",
+                  "description": "Title or assignee fragment; leave empty to list everything"
+                }
+              }
+            },
+            "probeSelectors": [
+              "[data-testid='task-search']",
+              "[data-testid='task-list']"
+            ],
+            "steps": [
+              {
+                "type": "fill",
+                "selector": "[data-testid='task-search']",
+                "value": "{{query}}"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='task-list']"
+              },
+              {
+                "type": "readList",
+                "selector": "[data-testid='task-list'] li",
+                "as": "tasks",
+                "limit": 50,
+                "fields": {
+                  "id": {
+                    "attribute": "data-task-id"
+                  },
+                  "title": {
+                    "selector": "[data-field='title']"
+                  },
+                  "assignee": {
+                    "selector": "[data-field='assignee']"
+                  },
+                  "status": {
+                    "selector": "[data-field='status']"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "name": "create_task",
+            "title": "Create task",
+            "description": "Create a task with a title and an assignee by submitting the real New Task form, then confirm the task exists by looking it up.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "What the task is"
+                },
+                "assignee": {
+                  "type": "string",
+                  "description": "Who it belongs to",
+                  "enum": [
+                    "Unassigned",
+                    "Mika Tanaka",
+                    "Jordan Reyes",
+                    "Priya Nair"
+                  ]
+                }
+              },
+              "required": [
+                "title",
+                "assignee"
+              ]
+            },
+            "probeSelectors": [
+              "[data-action='new-task']"
+            ],
+            "steps": [
+              {
+                "type": "click",
+                "selector": "[data-action='new-task']"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='task-form'] [name='title']"
+              },
+              {
+                "type": "fill",
+                "selector": "[data-testid='task-form'] [name='title']",
+                "value": "{{title}}"
+              },
+              {
+                "type": "select",
+                "selector": "[data-testid='task-form'] [name='assignee']",
+                "value": "{{assignee}}"
+              },
+              {
+                "type": "submit",
+                "selector": "[data-testid='task-form']"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='task-form']",
+                "state": "absent"
+              },
+              {
+                "type": "fill",
+                "selector": "[data-testid='task-search']",
+                "value": "{{title}}"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='task-list'] li"
+              },
+              {
+                "type": "readAttribute",
+                "selector": "[data-testid='task-list'] li",
+                "attribute": "data-task-id",
+                "as": "task_id"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='task-list'] li [data-field='assignee']",
+                "as": "assigned_to"
+              }
+            ]
+          },
+          {
+            "name": "assign_task",
+            "title": "Assign task",
+            "description": "Assign a task to a person. The task is located by title and the tool fails if the search does not narrow to exactly one task.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Task title, specific enough to match exactly one task"
+                },
+                "assignee": {
+                  "type": "string",
+                  "description": "Who to assign it to",
+                  "enum": [
+                    "Unassigned",
+                    "Mika Tanaka",
+                    "Jordan Reyes",
+                    "Priya Nair"
+                  ]
+                }
+              },
+              "required": [
+                "title",
+                "assignee"
+              ]
+            },
+            "probeSelectors": [
+              "[data-testid='task-search']"
+            ],
+            "steps": [
+              {
+                "type": "fill",
+                "selector": "[data-testid='task-search']",
+                "value": "{{title}}"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='task-list'] li"
+              },
+              {
+                "type": "select",
+                "selector": "[data-testid='task-list'] li select[data-action='assign']",
+                "value": "{{assignee}}"
+              },
+              {
+                "type": "assertText",
+                "selector": "[data-testid='task-list'] li [data-field='assignee']",
+                "contains": "{{assignee}}"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='task-list'] li [data-field='title']",
+                "as": "task"
+              }
+            ]
+          },
+          {
+            "name": "change_task_status",
+            "title": "Change task status",
+            "description": "Move a task to a different status. The task is located by title and the tool fails if the search does not narrow to exactly one task.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Task title, specific enough to match exactly one task"
+                },
+                "status": {
+                  "type": "string",
+                  "description": "The status to move it to",
+                  "enum": [
+                    "todo",
+                    "in_progress",
+                    "blocked",
+                    "done"
+                  ]
+                }
+              },
+              "required": [
+                "title",
+                "status"
+              ]
+            },
+            "probeSelectors": [
+              "[data-testid='task-search']"
+            ],
+            "steps": [
+              {
+                "type": "fill",
+                "selector": "[data-testid='task-search']",
+                "value": "{{title}}"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='task-list'] li"
+              },
+              {
+                "type": "select",
+                "selector": "[data-testid='task-list'] li select[data-action='status']",
+                "value": "{{status}}"
+              },
+              {
+                "type": "assertText",
+                "selector": "[data-testid='task-list'] li [data-field='status']",
+                "contains": "{{status}}"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='task-list'] li [data-field='title']",
+                "as": "task"
+              }
+            ]
+          },
+          {
+            "name": "flag_task",
+            "title": "Flag task",
+            "description": "Flag a task for attention.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Task title, specific enough to match exactly one task"
+                }
+              },
+              "required": [
+                "title"
+              ]
+            },
+            "probeSelectors": [
+              "[data-testid='task-search']"
+            ],
+            "steps": [
+              {
+                "type": "fill",
+                "selector": "[data-testid='task-search']",
+                "value": "{{title}}"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='task-list'] li"
+              },
+              {
+                "type": "check",
+                "selector": "[data-testid='task-list'] li input[data-action='toggle-flag']"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='task-list'] li [data-field='title']",
+                "as": "task"
+              }
+            ]
+          },
+          {
+            "name": "unflag_task",
+            "title": "Remove a task flag",
+            "description": "Remove the attention flag from a task.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Task title, specific enough to match exactly one task"
+                }
+              },
+              "required": [
+                "title"
+              ]
+            },
+            "probeSelectors": [
+              "[data-testid='task-search']"
+            ],
+            "steps": [
+              {
+                "type": "fill",
+                "selector": "[data-testid='task-search']",
+                "value": "{{title}}"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='task-list'] li"
+              },
+              {
+                "type": "uncheck",
+                "selector": "[data-testid='task-list'] li input[data-action='toggle-flag']"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='task-list'] li [data-field='title']",
+                "as": "task"
+              }
+            ]
+          },
+          {
+            "name": "delete_task",
+            "title": "Delete task",
+            "description": "Permanently delete a task. The task is located by title and the tool fails if the search does not narrow to exactly one task.",
+            "capability": "DESTRUCTIVE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string",
+                  "description": "Task title, specific enough to match exactly one task"
+                }
+              },
+              "required": [
+                "title"
+              ]
+            },
+            "probeSelectors": [
+              "[data-testid='task-search']"
+            ],
+            "steps": [
+              {
+                "type": "fill",
+                "selector": "[data-testid='task-search']",
+                "value": "{{title}}"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='task-list'] li"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='task-list'] li [data-field='title']",
+                "as": "deleted_task"
+              },
+              {
+                "type": "click",
+                "selector": "[data-testid='task-list'] li [data-action='delete-task']"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='task-list'] li",
+                "state": "absent"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "status": "official",
+      "verified": true,
+      "source": "adapters/demo-shop.json",
+      "adapter": {
+        "id": "demo-shop",
+        "name": "Nimbus Supply",
+        "version": "2.1.0",
+        "description": "Configure a Nimbus Desk, page through its photos, put it in the bag, apply a coupon and review the order — by driving the store's own controls. The site itself implements no WebMCP.",
+        "category": "commerce",
+        "author": "Liha WebMCP Adapter",
+        "verifiedAt": "2026-09-03",
+        "origins": [
+          "http://localhost:5274",
+          "http://127.0.0.1:5274",
+          "https://demo-shop.liha.review"
+        ],
+        "tools": [
+          {
+            "name": "view_configure",
+            "title": "Open the configurator",
+            "description": "Open the page where the desk is configured, and report what is currently selected.",
+            "capability": "INTERACT",
+            "inputSchema": {
+              "type": "object",
+              "properties": {}
+            },
+            "steps": [
+              {
+                "type": "navigate",
+                "path": "/"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='config-summary']"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='config-total']",
+                "as": "price"
+              }
+            ]
+          },
+          {
+            "name": "read_configuration",
+            "title": "Read the configuration",
+            "description": "Return the Nimbus Desk currently configured — top, size, base — and what it costs. Reads the configure page as it stands; open it first with view_configure.",
+            "capability": "READ",
+            "inputSchema": {
+              "type": "object",
+              "properties": {}
+            },
+            "steps": [
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='config-summary']"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='config-top']",
+                "as": "top"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='config-size']",
+                "as": "size"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='config-base']",
+                "as": "base"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='config-total']",
+                "as": "price"
+              }
+            ]
+          },
+          {
+            "name": "next_photo",
+            "title": "Show the next photo",
+            "description": "Page the product gallery on to the next photo and report which view is now showing.",
+            "capability": "INTERACT",
+            "inputSchema": {
+              "type": "object",
+              "properties": {}
+            },
+            "steps": [
+              {
+                "type": "navigate",
+                "path": "/"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-action='gallery-next']"
+              },
+              {
+                "type": "click",
+                "selector": "[data-action='gallery-next']"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='gallery-caption']"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='gallery-caption']",
+                "as": "view"
+              }
+            ]
+          },
+          {
+            "name": "choose_top",
+            "title": "Choose the top",
+            "description": "Pick the material the desk top is made from. The price updates as soon as it is set.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "top": {
+                  "type": "string",
+                  "description": "Which top to fit",
+                  "enum": [
+                    "Solid oak",
+                    "Solid walnut",
+                    "Charcoal laminate"
+                  ]
+                }
+              },
+              "required": [
+                "top"
+              ]
+            },
+            "steps": [
+              {
+                "type": "navigate",
+                "path": "/"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='config-top']"
+              },
+              {
+                "type": "select",
+                "selector": "[data-testid='config-top']",
+                "value": "{{top}}"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='config-top']",
+                "as": "top"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='config-total']",
+                "as": "price"
+              }
+            ]
+          },
+          {
+            "name": "choose_size",
+            "title": "Choose the size",
+            "description": "Pick how big the desk top is.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "size": {
+                  "type": "string",
+                  "description": "Which size to fit",
+                  "enum": [
+                    "120 × 70 cm",
+                    "140 × 70 cm",
+                    "180 × 80 cm"
+                  ]
+                }
+              },
+              "required": [
+                "size"
+              ]
+            },
+            "steps": [
+              {
+                "type": "navigate",
+                "path": "/"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='config-size']"
+              },
+              {
+                "type": "select",
+                "selector": "[data-testid='config-size']",
+                "value": "{{size}}"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='config-size']",
+                "as": "size"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='config-total']",
+                "as": "price"
+              }
+            ]
+          },
+          {
+            "name": "choose_base",
+            "title": "Choose the base",
+            "description": "Pick the frame the desk stands on.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "base": {
+                  "type": "string",
+                  "description": "Which base to fit",
+                  "enum": [
+                    "Fixed frame",
+                    "Height-adjustable",
+                    "Adjustable + memory"
+                  ]
+                }
+              },
+              "required": [
+                "base"
+              ]
+            },
+            "steps": [
+              {
+                "type": "navigate",
+                "path": "/"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='config-base']"
+              },
+              {
+                "type": "select",
+                "selector": "[data-testid='config-base']",
+                "value": "{{base}}"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='config-base']",
+                "as": "base"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='config-total']",
+                "as": "price"
+              }
+            ]
+          },
+          {
+            "name": "add_to_bag",
+            "title": "Add the configuration to the bag",
+            "description": "Put the desk as currently configured into the bag, then report what the bag holds.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {}
+            },
+            "steps": [
+              {
+                "type": "navigate",
+                "path": "/"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-action='add-to-bag']"
+              },
+              {
+                "type": "click",
+                "selector": "[data-action='add-to-bag']"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='bag-items'] li"
+              },
+              {
+                "type": "readList",
+                "selector": "[data-testid='bag-items'] li",
+                "as": "bag"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='bag-total']",
+                "as": "total"
+              }
+            ]
+          },
+          {
+            "name": "view_bag",
+            "title": "View the bag",
+            "description": "Open the bag and return what is in it and what it comes to.",
+            "capability": "INTERACT",
+            "inputSchema": {
+              "type": "object",
+              "properties": {}
+            },
+            "steps": [
+              {
+                "type": "navigate",
+                "path": "/bag"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='bag-panel']"
+              },
+              {
+                "type": "readList",
+                "selector": "[data-testid='bag-items'] li",
+                "as": "items"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='bag-total']",
+                "as": "total"
+              }
+            ]
+          },
+          {
+            "name": "apply_coupon",
+            "title": "Apply a coupon",
+            "description": "Enter a coupon code on the bag and report whether the store accepted it, with the total that results.",
+            "capability": "WRITE",
+            "inputSchema": {
+              "type": "object",
+              "properties": {
+                "code": {
+                  "type": "string",
+                  "description": "The coupon code to try"
+                }
+              },
+              "required": [
+                "code"
+              ]
+            },
+            "steps": [
+              {
+                "type": "navigate",
+                "path": "/bag"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='coupon-form'] [name='coupon']"
+              },
+              {
+                "type": "fill",
+                "selector": "[data-testid='coupon-form'] [name='coupon']",
+                "value": "{{code}}"
+              },
+              {
+                "type": "click",
+                "selector": "[data-action='apply-coupon']"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='coupon-status']"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='coupon-status']",
+                "as": "coupon_status"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='bag-total']",
+                "as": "total"
+              }
+            ]
+          },
+          {
+            "name": "review_order",
+            "title": "Open the order review",
+            "description": "Move the bag to the order review and report what would be ordered. It stops there: this store has no payment step, so there is nothing here to pay with.",
+            "capability": "INTERACT",
+            "inputSchema": {
+              "type": "object",
+              "properties": {}
+            },
+            "steps": [
+              {
+                "type": "navigate",
+                "path": "/bag"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-action='review-order']"
+              },
+              {
+                "type": "click",
+                "selector": "[data-action='review-order']"
+              },
+              {
+                "type": "waitFor",
+                "selector": "[data-testid='order-review']"
+              },
+              {
+                "type": "readText",
+                "selector": "[data-testid='review-total']",
+                "as": "total"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

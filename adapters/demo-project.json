@@ -1,0 +1,391 @@
+{
+  "id": "demo-project",
+  "name": "Kite Project Manager",
+  "version": "1.2.0",
+  "description": "Create, assign, re-status, flag and delete tasks in the Kite Project Manager demo. Deleting is classified DESTRUCTIVE and always asks for confirmation.",
+  "category": "productivity",
+  "author": "Liha WebMCP Adapter",
+  "verifiedAt": "2026-09-01",
+  "origins": [
+    "http://localhost:5275",
+    "http://127.0.0.1:5275",
+    "https://demo-project.liha.review"
+  ],
+  "tools": [
+    {
+      "name": "list_tasks",
+      "title": "List tasks",
+      "description": "Search tasks by title or assignee and return the matching tasks with their assignee and status.",
+      "capability": "READ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Title or assignee fragment; leave empty to list everything"
+          }
+        }
+      },
+      "probeSelectors": [
+        "[data-testid='task-search']",
+        "[data-testid='task-list']"
+      ],
+      "steps": [
+        {
+          "type": "fill",
+          "selector": "[data-testid='task-search']",
+          "value": "{{query}}"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='task-list']"
+        },
+        {
+          "type": "readList",
+          "selector": "[data-testid='task-list'] li",
+          "as": "tasks",
+          "limit": 50,
+          "fields": {
+            "id": {
+              "attribute": "data-task-id"
+            },
+            "title": {
+              "selector": "[data-field='title']"
+            },
+            "assignee": {
+              "selector": "[data-field='assignee']"
+            },
+            "status": {
+              "selector": "[data-field='status']"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "create_task",
+      "title": "Create task",
+      "description": "Create a task with a title and an assignee by submitting the real New Task form, then confirm the task exists by looking it up.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "What the task is"
+          },
+          "assignee": {
+            "type": "string",
+            "description": "Who it belongs to",
+            "enum": [
+              "Unassigned",
+              "Mika Tanaka",
+              "Jordan Reyes",
+              "Priya Nair"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "assignee"
+        ]
+      },
+      "probeSelectors": [
+        "[data-action='new-task']"
+      ],
+      "steps": [
+        {
+          "type": "click",
+          "selector": "[data-action='new-task']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='task-form'] [name='title']"
+        },
+        {
+          "type": "fill",
+          "selector": "[data-testid='task-form'] [name='title']",
+          "value": "{{title}}"
+        },
+        {
+          "type": "select",
+          "selector": "[data-testid='task-form'] [name='assignee']",
+          "value": "{{assignee}}"
+        },
+        {
+          "type": "submit",
+          "selector": "[data-testid='task-form']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='task-form']",
+          "state": "absent"
+        },
+        {
+          "type": "fill",
+          "selector": "[data-testid='task-search']",
+          "value": "{{title}}"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='task-list'] li"
+        },
+        {
+          "type": "readAttribute",
+          "selector": "[data-testid='task-list'] li",
+          "attribute": "data-task-id",
+          "as": "task_id"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='task-list'] li [data-field='assignee']",
+          "as": "assigned_to"
+        }
+      ]
+    },
+    {
+      "name": "assign_task",
+      "title": "Assign task",
+      "description": "Assign a task to a person. The task is located by title and the tool fails if the search does not narrow to exactly one task.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Task title, specific enough to match exactly one task"
+          },
+          "assignee": {
+            "type": "string",
+            "description": "Who to assign it to",
+            "enum": [
+              "Unassigned",
+              "Mika Tanaka",
+              "Jordan Reyes",
+              "Priya Nair"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "assignee"
+        ]
+      },
+      "probeSelectors": [
+        "[data-testid='task-search']"
+      ],
+      "steps": [
+        {
+          "type": "fill",
+          "selector": "[data-testid='task-search']",
+          "value": "{{title}}"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='task-list'] li"
+        },
+        {
+          "type": "select",
+          "selector": "[data-testid='task-list'] li select[data-action='assign']",
+          "value": "{{assignee}}"
+        },
+        {
+          "type": "assertText",
+          "selector": "[data-testid='task-list'] li [data-field='assignee']",
+          "contains": "{{assignee}}"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='task-list'] li [data-field='title']",
+          "as": "task"
+        }
+      ]
+    },
+    {
+      "name": "change_task_status",
+      "title": "Change task status",
+      "description": "Move a task to a different status. The task is located by title and the tool fails if the search does not narrow to exactly one task.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Task title, specific enough to match exactly one task"
+          },
+          "status": {
+            "type": "string",
+            "description": "The status to move it to",
+            "enum": [
+              "todo",
+              "in_progress",
+              "blocked",
+              "done"
+            ]
+          }
+        },
+        "required": [
+          "title",
+          "status"
+        ]
+      },
+      "probeSelectors": [
+        "[data-testid='task-search']"
+      ],
+      "steps": [
+        {
+          "type": "fill",
+          "selector": "[data-testid='task-search']",
+          "value": "{{title}}"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='task-list'] li"
+        },
+        {
+          "type": "select",
+          "selector": "[data-testid='task-list'] li select[data-action='status']",
+          "value": "{{status}}"
+        },
+        {
+          "type": "assertText",
+          "selector": "[data-testid='task-list'] li [data-field='status']",
+          "contains": "{{status}}"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='task-list'] li [data-field='title']",
+          "as": "task"
+        }
+      ]
+    },
+    {
+      "name": "flag_task",
+      "title": "Flag task",
+      "description": "Flag a task for attention.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Task title, specific enough to match exactly one task"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "probeSelectors": [
+        "[data-testid='task-search']"
+      ],
+      "steps": [
+        {
+          "type": "fill",
+          "selector": "[data-testid='task-search']",
+          "value": "{{title}}"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='task-list'] li"
+        },
+        {
+          "type": "check",
+          "selector": "[data-testid='task-list'] li input[data-action='toggle-flag']"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='task-list'] li [data-field='title']",
+          "as": "task"
+        }
+      ]
+    },
+    {
+      "name": "unflag_task",
+      "title": "Remove a task flag",
+      "description": "Remove the attention flag from a task.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Task title, specific enough to match exactly one task"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "probeSelectors": [
+        "[data-testid='task-search']"
+      ],
+      "steps": [
+        {
+          "type": "fill",
+          "selector": "[data-testid='task-search']",
+          "value": "{{title}}"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='task-list'] li"
+        },
+        {
+          "type": "uncheck",
+          "selector": "[data-testid='task-list'] li input[data-action='toggle-flag']"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='task-list'] li [data-field='title']",
+          "as": "task"
+        }
+      ]
+    },
+    {
+      "name": "delete_task",
+      "title": "Delete task",
+      "description": "Permanently delete a task. The task is located by title and the tool fails if the search does not narrow to exactly one task.",
+      "capability": "DESTRUCTIVE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Task title, specific enough to match exactly one task"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "probeSelectors": [
+        "[data-testid='task-search']"
+      ],
+      "steps": [
+        {
+          "type": "fill",
+          "selector": "[data-testid='task-search']",
+          "value": "{{title}}"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='task-list'] li"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='task-list'] li [data-field='title']",
+          "as": "deleted_task"
+        },
+        {
+          "type": "click",
+          "selector": "[data-testid='task-list'] li [data-action='delete-task']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='task-list'] li",
+          "state": "absent"
+        }
+      ]
+    }
+  ]
+}

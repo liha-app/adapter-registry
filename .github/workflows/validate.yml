@@ -1,0 +1,40 @@
+name: Validate adapters
+
+on:
+  pull_request:
+    paths:
+      - 'adapters/**'
+      - 'catalog.json'
+      - 'registry.json'
+      - 'scripts/**'
+      - '.github/workflows/validate.yml'
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out submission
+        uses: actions/checkout@v7
+        with:
+          path: submission
+
+      - name: Check out trusted validator
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: trusted
+
+      - name: Validate pull request with base-branch code
+        if: github.event_name == 'pull_request'
+        run: node trusted/scripts/validate.mjs --root submission --check
+
+      - name: Validate main
+        if: github.event_name != 'pull_request'
+        run: node submission/scripts/validate.mjs --root submission --check

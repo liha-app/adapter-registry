@@ -1,0 +1,406 @@
+{
+  "id": "demo-shop",
+  "name": "Nimbus Supply",
+  "version": "2.1.0",
+  "description": "Configure a Nimbus Desk, page through its photos, put it in the bag, apply a coupon and review the order — by driving the store's own controls. The site itself implements no WebMCP.",
+  "category": "commerce",
+  "author": "Liha WebMCP Adapter",
+  "verifiedAt": "2026-09-03",
+  "origins": [
+    "http://localhost:5274",
+    "http://127.0.0.1:5274",
+    "https://demo-shop.liha.review"
+  ],
+  "tools": [
+    {
+      "name": "view_configure",
+      "title": "Open the configurator",
+      "description": "Open the page where the desk is configured, and report what is currently selected.",
+      "capability": "INTERACT",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='config-summary']"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-total']",
+          "as": "price"
+        }
+      ]
+    },
+    {
+      "name": "read_configuration",
+      "title": "Read the configuration",
+      "description": "Return the Nimbus Desk currently configured — top, size, base — and what it costs. Reads the configure page as it stands; open it first with view_configure.",
+      "capability": "READ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "steps": [
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='config-summary']"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-top']",
+          "as": "top"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-size']",
+          "as": "size"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-base']",
+          "as": "base"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-total']",
+          "as": "price"
+        }
+      ]
+    },
+    {
+      "name": "next_photo",
+      "title": "Show the next photo",
+      "description": "Page the product gallery on to the next photo and report which view is now showing.",
+      "capability": "INTERACT",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-action='gallery-next']"
+        },
+        {
+          "type": "click",
+          "selector": "[data-action='gallery-next']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='gallery-caption']"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='gallery-caption']",
+          "as": "view"
+        }
+      ]
+    },
+    {
+      "name": "choose_top",
+      "title": "Choose the top",
+      "description": "Pick the material the desk top is made from. The price updates as soon as it is set.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "top": {
+            "type": "string",
+            "description": "Which top to fit",
+            "enum": [
+              "Solid oak",
+              "Solid walnut",
+              "Charcoal laminate"
+            ]
+          }
+        },
+        "required": [
+          "top"
+        ]
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='config-top']"
+        },
+        {
+          "type": "select",
+          "selector": "[data-testid='config-top']",
+          "value": "{{top}}"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-top']",
+          "as": "top"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-total']",
+          "as": "price"
+        }
+      ]
+    },
+    {
+      "name": "choose_size",
+      "title": "Choose the size",
+      "description": "Pick how big the desk top is.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "size": {
+            "type": "string",
+            "description": "Which size to fit",
+            "enum": [
+              "120 × 70 cm",
+              "140 × 70 cm",
+              "180 × 80 cm"
+            ]
+          }
+        },
+        "required": [
+          "size"
+        ]
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='config-size']"
+        },
+        {
+          "type": "select",
+          "selector": "[data-testid='config-size']",
+          "value": "{{size}}"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-size']",
+          "as": "size"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-total']",
+          "as": "price"
+        }
+      ]
+    },
+    {
+      "name": "choose_base",
+      "title": "Choose the base",
+      "description": "Pick the frame the desk stands on.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "type": "string",
+            "description": "Which base to fit",
+            "enum": [
+              "Fixed frame",
+              "Height-adjustable",
+              "Adjustable + memory"
+            ]
+          }
+        },
+        "required": [
+          "base"
+        ]
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='config-base']"
+        },
+        {
+          "type": "select",
+          "selector": "[data-testid='config-base']",
+          "value": "{{base}}"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-base']",
+          "as": "base"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='config-total']",
+          "as": "price"
+        }
+      ]
+    },
+    {
+      "name": "add_to_bag",
+      "title": "Add the configuration to the bag",
+      "description": "Put the desk as currently configured into the bag, then report what the bag holds.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-action='add-to-bag']"
+        },
+        {
+          "type": "click",
+          "selector": "[data-action='add-to-bag']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='bag-items'] li"
+        },
+        {
+          "type": "readList",
+          "selector": "[data-testid='bag-items'] li",
+          "as": "bag"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='bag-total']",
+          "as": "total"
+        }
+      ]
+    },
+    {
+      "name": "view_bag",
+      "title": "View the bag",
+      "description": "Open the bag and return what is in it and what it comes to.",
+      "capability": "INTERACT",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/bag"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='bag-panel']"
+        },
+        {
+          "type": "readList",
+          "selector": "[data-testid='bag-items'] li",
+          "as": "items"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='bag-total']",
+          "as": "total"
+        }
+      ]
+    },
+    {
+      "name": "apply_coupon",
+      "title": "Apply a coupon",
+      "description": "Enter a coupon code on the bag and report whether the store accepted it, with the total that results.",
+      "capability": "WRITE",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "The coupon code to try"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/bag"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='coupon-form'] [name='coupon']"
+        },
+        {
+          "type": "fill",
+          "selector": "[data-testid='coupon-form'] [name='coupon']",
+          "value": "{{code}}"
+        },
+        {
+          "type": "click",
+          "selector": "[data-action='apply-coupon']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='coupon-status']"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='coupon-status']",
+          "as": "coupon_status"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='bag-total']",
+          "as": "total"
+        }
+      ]
+    },
+    {
+      "name": "review_order",
+      "title": "Open the order review",
+      "description": "Move the bag to the order review and report what would be ordered. It stops there: this store has no payment step, so there is nothing here to pay with.",
+      "capability": "INTERACT",
+      "inputSchema": {
+        "type": "object",
+        "properties": {}
+      },
+      "steps": [
+        {
+          "type": "navigate",
+          "path": "/bag"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-action='review-order']"
+        },
+        {
+          "type": "click",
+          "selector": "[data-action='review-order']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "[data-testid='order-review']"
+        },
+        {
+          "type": "readText",
+          "selector": "[data-testid='review-total']",
+          "as": "total"
+        }
+      ]
+    }
+  ]
+}

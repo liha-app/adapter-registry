@@ -1,0 +1,10 @@
+{
+  "name": "@liha/adapter-registry",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/validate.mjs --write",
+    "test": "node scripts/validate.mjs --check"
+  }
+}
