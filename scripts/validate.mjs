@@ -28,8 +28,9 @@ const array = (value, path, { min = 0, max = Infinity } = {}) => {
   return value;
 };
 
-const TOP_KEYS = ['id', 'name', 'version', 'description', 'category', 'author', 'homepage', 'verifiedAt', 'origins', 'tools'];
-const TOOL_KEYS = ['name', 'title', 'description', 'capability', 'inputSchema', 'probeSelectors', 'steps'];
+const TOP_KEYS = ['id', 'name', 'version', 'description', 'category', 'author', 'homepage', 'verifiedAt', 'origins', 'i18n', 'tools'];
+const TOOL_KEYS = ['name', 'title', 'description', 'capability', 'inputSchema', 'probeSelectors', 'i18n', 'steps'];
+const LOCALE = /^[a-z]{2}(-[A-Z]{2})?$/;
 const CATEGORIES = new Set(['crm', 'commerce', 'productivity', 'developer-tools', 'registry', 'other']);
 const CAPABILITIES = new Set(['READ', 'INTERACT', 'WRITE', 'DESTRUCTIVE']);
 const INPUT_TYPES = new Set(['string', 'number', 'integer', 'boolean']);
@@ -84,6 +85,27 @@ function validateInputSchema(schema, path) {
     if (!names.has(name)) at(`${path}.required.${index}`, `references undeclared property ${JSON.stringify(name)}`);
   }
   return names;
+}
+
+/*
+ * Display text per locale.
+ *
+ * Store-facing only: `name` and `description` above stay exactly as the author
+ * wrote them, because that is what an agent is handed when it chooses a tool.
+ * Nothing else is translatable — a locale that renamed a tool or a capability
+ * would be describing a different adapter from the one that runs.
+ */
+function validateI18n(value, path) {
+  if (!isObject(value)) return at(path, 'must be an object');
+  for (const [locale, entry] of Object.entries(value)) {
+    const localePath = `${path}.${locale}`;
+    if (!LOCALE.test(locale)) at(localePath, 'must be a locale such as "ja" or "pt-BR"');
+    hasOnly(entry, ['name', 'description'], localePath);
+    if (!isObject(entry)) continue;
+    if (entry.name !== undefined) string(entry.name, `${localePath}.name`, { min: 1, max: 120 });
+    if (entry.description !== undefined) string(entry.description, `${localePath}.description`, { min: 1, max: 1000 });
+    if (entry.name === undefined && entry.description === undefined) at(localePath, 'must declare name or description');
+  }
 }
 
 function validateStep(step, path, declared) {
@@ -151,6 +173,7 @@ function validateAdapter(adapter, filename) {
   for (const [index, origin] of array(adapter.origins, `${path}.origins`, { min: 1, max: 4 }).entries()) {
     if (!exactOrigin(origin)) at(`${path}.origins.${index}`, 'must be a canonical exact http(s) origin');
   }
+  if (adapter.i18n !== undefined) validateI18n(adapter.i18n, `${path}.i18n`);
   const names = new Set();
   for (const [index, tool] of array(adapter.tools, `${path}.tools`, { min: 1, max: 50 }).entries()) {
     const toolPath = `${path}.tools.${index}`;
@@ -166,6 +189,7 @@ function validateAdapter(adapter, filename) {
     if (tool.probeSelectors !== undefined) for (const [probeIndex, selector] of array(tool.probeSelectors, `${toolPath}.probeSelectors`, { max: 10 }).entries()) {
       string(selector, `${toolPath}.probeSelectors.${probeIndex}`, { min: 1, max: 500 });
     }
+    if (tool.i18n !== undefined) validateI18n(tool.i18n, `${toolPath}.i18n`);
     const steps = array(tool.steps, `${toolPath}.steps`, { min: 1, max: 50 });
     steps.forEach((step, stepIndex) => validateStep(step, `${toolPath}.steps.${stepIndex}`, declared));
     if (tool.capability === 'READ') {

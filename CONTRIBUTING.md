@@ -17,6 +17,20 @@ installable.
 - Set `verifiedAt` to the date you last exercised every tool.
 - Increment `version` when updating an existing adapter.
 
+## Display text in other languages
+
+An adapter may carry an optional `i18n` block, on itself and on any tool:
+
+```json
+"i18n": { "ja": { "name": "npm パッケージ検索", "description": "…" } }
+```
+
+Only `name` and `description` are translatable, and only for the Store's
+listing. The `description` above the block is what an agent is handed when it
+chooses a tool, so it stays in the language it was written in; tool names,
+capabilities and every other field are part of what runs and are never
+translated. A locale with no entry falls back to the canonical text.
+
 Run the same deterministic check as CI:
 
 ```bash
