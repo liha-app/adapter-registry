@@ -1,0 +1,156 @@
+{
+  "id": "npm-package-finder",
+  "name": "npm Package Finder",
+  "version": "1.0.0",
+  "description": "Search npm packages and inspect package metadata and version history through npm's real website UI.",
+  "category": "developer-tools",
+  "author": "Sakuya (@sakuyasann)",
+  "homepage": "https://www.npmjs.com/",
+  "verifiedAt": "2026-09-03",
+  "origins": [
+    "https://www.npmjs.com"
+  ],
+  "tools": [
+    {
+      "name": "search_packages",
+      "title": "Search npm packages",
+      "description": "Search npm from any npmjs.com page and return up to ten matching packages with their names, descriptions and links.",
+      "capability": "INTERACT",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Package name, keyword or phrase to search for"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "probeSelectors": [
+        "form[action='/search']",
+        "input[name='q'][type='search']"
+      ],
+      "steps": [
+        {
+          "type": "fill",
+          "selector": "input[name='q'][type='search']",
+          "value": "{{query}}"
+        },
+        {
+          "type": "submit",
+          "selector": "form[action='/search']"
+        },
+        {
+          "type": "waitFor",
+          "selector": "main summary[aria-haspopup='listbox']"
+        },
+        {
+          "type": "readText",
+          "selector": "main h2",
+          "as": "result_count"
+        },
+        {
+          "type": "readList",
+          "selector": "main section:has(a[href^='/package/'] h3)",
+          "as": "packages",
+          "limit": 10,
+          "fields": {
+            "name": {
+              "selector": "a[href^='/package/'] h3"
+            },
+            "description": {
+              "selector": "p"
+            },
+            "url": {
+              "selector": "a[href^='/package/']:has(h3)",
+              "attribute": "href"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "read_current_package",
+      "title": "Read current npm package",
+      "description": "Read the package name, install command and sidebar metadata from the npm package page currently open in this tab.",
+      "capability": "READ",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "probeSelectors": [
+        "main h1:not(article h1)",
+        "aside[aria-label='Package sidebar']"
+      ],
+      "steps": [
+        {
+          "type": "readText",
+          "selector": "main h1:not(article h1)",
+          "as": "package"
+        },
+        {
+          "type": "readText",
+          "selector": "aside[aria-label='Package sidebar'] code",
+          "as": "install_command"
+        },
+        {
+          "type": "readText",
+          "selector": "aside[aria-label='Package sidebar']",
+          "as": "metadata"
+        }
+      ]
+    },
+    {
+      "name": "list_package_versions",
+      "title": "List npm package versions",
+      "description": "Open the Versions tab for the npm package currently displayed and return up to 25 recent versions with weekly downloads and publish times.",
+      "capability": "INTERACT",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      },
+      "probeSelectors": [
+        "#package-tab-versions"
+      ],
+      "steps": [
+        {
+          "type": "click",
+          "selector": "#package-tab-versions"
+        },
+        {
+          "type": "waitFor",
+          "selector": "#tabpanel-versions table[aria-labelledby='version-history']"
+        },
+        {
+          "type": "readList",
+          "selector": "#tabpanel-versions table[aria-labelledby='version-history'] tbody tr",
+          "as": "versions",
+          "limit": 25,
+          "fields": {
+            "version": {
+              "selector": "td:nth-child(1) a[href^='/package/']"
+            },
+            "url": {
+              "selector": "td:nth-child(1) a[href^='/package/']",
+              "attribute": "href"
+            },
+            "weekly_downloads": {
+              "selector": "td:nth-child(2)"
+            },
+            "published": {
+              "selector": "td:nth-child(3)"
+            },
+            "published_at": {
+              "selector": "td:nth-child(3) time",
+              "attribute": "datetime"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
