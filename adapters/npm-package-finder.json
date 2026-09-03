@@ -1,7 +1,7 @@
 {
   "id": "npm-package-finder",
   "name": "npm Package Finder",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Search npm packages and inspect package metadata and version history through npm's real website UI.",
   "category": "developer-tools",
   "author": "Sakuya (@sakuyasann)",
@@ -10,6 +10,12 @@
   "origins": [
     "https://www.npmjs.com"
   ],
+  "i18n": {
+    "ja": {
+      "name": "npm パッケージ検索",
+      "description": "npm の実際のサイトを操作して、パッケージを検索し、メタデータとバージョン履歴を読み取ります。サイト自体は WebMCP を実装していません。"
+    }
+  },
   "tools": [
     {
       "name": "search_packages",
@@ -32,6 +38,11 @@
         "form[action='/search']",
         "input[name='q'][type='search']"
       ],
+      "i18n": {
+        "ja": {
+          "description": "npmjs.com のどのページからでも npm を検索し、一致したパッケージを最大10件、名前・説明・リンクとともに返します。"
+        }
+      },
       "steps": [
         {
           "type": "fill",
@@ -85,6 +96,11 @@
         "main h1:not(article h1)",
         "aside[aria-label='Package sidebar']"
       ],
+      "i18n": {
+        "ja": {
+          "description": "いまこのタブで開いている npm パッケージページから、パッケージ名、インストールコマンド、サイドバーの情報を読み取ります。"
+        }
+      },
       "steps": [
         {
           "type": "readText",
@@ -116,6 +132,11 @@
       "probeSelectors": [
         "#package-tab-versions"
       ],
+      "i18n": {
+        "ja": {
+          "description": "表示中のパッケージの Versions タブを開き、最近のバージョンを最大25件、週間ダウンロード数と公開時期とともに返します。"
+        }
+      },
       "steps": [
         {
           "type": "click",
